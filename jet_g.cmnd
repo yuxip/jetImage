@@ -1,0 +1,17 @@
+
+// CM energy
+Beams:eCM = 13000.
+
+// select QCD process: only gluon in the final-state
+HardQCD:gg2gg = on
+HardQCD:qqbar2gg = on
+
+// turn off hadronization
+//HadronLevel:all = off
+
+// other settings
+Next:numberShowInfo = 0
+Next:numberShowProcess = 0
+Next:numberShowEvent = 0
+
+

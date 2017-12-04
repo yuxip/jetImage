@@ -1,0 +1,17 @@
+
+// CM energy
+Beams:eCM = 13000.
+
+// select QCD process: only b-quark in the final-state
+HardQCD:gg2bbbar = on
+HardQCD:qqbar2bbbar = on
+
+// turn off hadronization
+//HadronLevel:all = off
+
+// other settings
+Next:numberShowInfo = 0
+Next:numberShowProcess = 0
+Next:numberShowEvent = 0
+
+
