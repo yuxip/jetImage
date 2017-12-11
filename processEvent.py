@@ -1,12 +1,12 @@
 import ROOT
 import numpy as np
 import matplotlib.pyplot as plt
-
+from sklearn import preprocessing
 
 def readevent():
 
     ROOT.gSystem.Load("libPevent.so")
-    filename = "pevents.root"
+    filename = "pevents_jetq.root"
     infile = ROOT.TFile(filename)
     tevent = infile.Get("tevent")
     tevent.Print()
@@ -23,7 +23,7 @@ def readevent():
 def readjets():
     
     ROOT.gSystem.Load("libPevent.so")
-    filename = "pevents.root"
+    filename = "pevents_jetq.root"
     infile = ROOT.TFile(filename)
     tevent = infile.Get("tevent")
     tevent.Print()
@@ -52,7 +52,7 @@ def generateJetImages():
     
     jetImages = []
     njets = 0
-    for pjet in readjets():
+    for t,pjet in enumerate(readjets()):
         #pjet.Print()
         njets += 1
         # compute the pt-weighted centroid
@@ -97,7 +97,7 @@ def generateJetImages():
             eta = ptrk4vec.Eta()
             phi = ptrk4vec.Phi()
             charge = ptrk.charge()
-            
+
             if abs(eta - etaC) > R or abs(phi - phiC) > R: continue
 
             # find bin number
@@ -109,9 +109,9 @@ def generateJetImages():
             else:
                 imagePtCharged[etaBin, phiBin] += pt
                 imageMultCharged[etaBin, phiBin] += 1
-            
+                
         jetImages.append([imagePtCharged, imagePtNeutral, imageMultCharged])
-    
+
     print 'njets: ',njets
     jetImages = np.array(jetImages)
     print 'jetImages.shape:'
@@ -122,7 +122,7 @@ def generateJetImages():
     print meanImagePtCharged.shape
     plt.imshow(meanImagePtCharged)
     plt.colorbar()
-    plt.savefig('ptcharged_mean.png')
+    plt.savefig('ptcharged_mean_q.png')
     
     # plot mean imagesPtNeutral
     plt.clf()
@@ -130,7 +130,7 @@ def generateJetImages():
     print meanImagePtNeutral.shape
     plt.imshow(meanImagePtNeutral)
     plt.colorbar()
-    plt.savefig('ptneutral_mean.png')
+    plt.savefig('ptneutral_mean_q.png')
     
     # plot mean imageMultCharged
     plt.clf()
@@ -138,15 +138,61 @@ def generateJetImages():
     print meanImageMultCharged.shape
     plt.imshow(meanImageMultCharged)
     plt.colorbar()
-    plt.savefig('multcharged_mean.png')
+    plt.savefig('multcharged_mean_q.png')
+    
+    # normalize & standardize each channel
+    normJetImages = np.zeros_like(jetImages)
+    stJetImages = np.zeros_like(jetImages)
+    # 1). normalize, divide each pixel by the sum of all pixel values in the same channel
+    sumImagePtCharged = np.sum(jetImages[:,0,:,:], axis=(1,2))
+    print 'sumImagePtCharged.shape:'
+    print sumImagePtCharged.shape
+    print 'min sumImagePtCharged'
+    print np.min(sumImagePtCharged)
+    print 'argmin sumImagePtCharged'
+    print np.argmin(sumImagePtCharged, axis=0)
+    # some images only contain zero pixel values, remove them?
 
-    with open('jetimages.npy', 'wb') as outfile:
+    # boradcast the sum to match the shape of jetImages
+    normJetImages[:,0,:,:] = np.nan_to_num(jetImages[:,0,:,:]/sumImagePtCharged[:, np.newaxis, np.newaxis])
+
+    # to the same for the other two channels
+    sumImagePtNeutral = np.sum(jetImages[:,1,:,:], axis=(1,2))
+    normJetImages[:,1,:,:] = np.nan_to_num(jetImages[:,1,:,:]/sumImagePtNeutral[:, np.newaxis, np.newaxis])
+
+    sumImageMultCharged = np.sum(jetImages[:,2,:,:], axis=(1,2))
+    normJetImages[:,2,:,:] = np.nan_to_num(jetImages[:,2,:,:]/sumImageMultCharged[:, np.newaxis, np.newaxis])
+    
+    # double-check
+    normJetSum = np.sum(normJetImages, axis=(2,3))
+    print np.mean(normJetSum[normJetSum!=np.zeros_like(normJetSum)])
+    
+    # standardize
+    r = 1e-5
+    stJetImages[:,0,:,:] = np.nan_to_num((normJetImages[:,0,:,:] - np.mean(normJetImages[:,0,:,:], 
+        axis=(1,2))[:, np.newaxis, np.newaxis]) / (np.std(normJetImages[:,0,:,:], axis=(1,2))[:, np.newaxis, np.newaxis]
+        + r*np.ones(normJetImages[:,0,:,:].shape)))
+    
+    stJetImages[:,1,:,:] = np.nan_to_num((normJetImages[:,1,:,:] - np.mean(normJetImages[:,1,:,:], 
+        axis=(1,2))[:, np.newaxis, np.newaxis]) / (np.std(normJetImages[:,1,:,:], axis=(1,2))[:, np.newaxis, np.newaxis]
+        + r*np.ones(normJetImages[:,1,:,:].shape)))
+    
+    stJetImages[:,2,:,:] = np.nan_to_num((normJetImages[:,2,:,:] - np.mean(normJetImages[:,2,:,:], 
+        axis=(1,2))[:, np.newaxis, np.newaxis]) / (np.std(normJetImages[:,2,:,:], axis=(1,2))[:, np.newaxis, np.newaxis]
+        + r*np.ones(normJetImages[:,2,:,:].shape)))
+    
+    # double-check
+    print np.sum(np.mean(stJetImages, axis=(2,3)))
+    #print np.mean(np.std(stJetImages, axis=(2,3)))
+    #return 1
+
+    with open('stjetimages_q.npy', 'wb') as outfile:
         np.save(outfile, jetImages)
 
 def readJetImages():
     
     print 'reading jet images...'
-    jetImages = np.load('jetimages.npy')
+    jetImages = np.load('stjetimages_q.npy')
     print 'jetImages.shape:'
     print jetImages.shape
 
