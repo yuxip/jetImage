@@ -27,7 +27,7 @@ int massSel = 2; // use particles real mass in the reconstruction
  
 int main() {
 
-    TFile* file = new TFile("pevents.root","RECREATE");
+    TFile* file = new TFile("pevents_jetg.root","RECREATE");
     TTree* tevent = new TTree("tevent", "pythia events");
     
     //custom event/jet/track-level objects to hold relevant data
@@ -51,11 +51,10 @@ int main() {
     // Common settings for all the subruns
     // for q, g, b initiated jets, change accordingly
     // jet_q.cmnd, jet_g.cmnd, jet_b.cmnd
-    pythia.readFile("jet_q.cmnd");
+    pythia.readFile("jet_g.cmnd");
 
     // Number of events per bin, generated and listed ones.
-    int nEvent = 1000;
-    int nList = 0, nListJets = 3;
+    int nEvent = 100000;
     int nBin = 7;
     double pTlimit[8] = {20., 50., 100., 150., 200., 300., 500., 0.};
 
@@ -77,13 +76,13 @@ int main() {
             pevent->Clear();
             pjets->clear();
             
-            // save the two hard-scattered out-going partons
             int ipar = 0;
             Ptrack partons[2];
             for (int i = 0; i < event.size(); i++) {
                 //cout << " particle " << i << ", status code: " << event[i].status() << ", pdgID: " << event[i].id() << endl;
-                // find out-going partons from the hard-scattering
+                // find out-going partons
                 if (event[i].status() == -23) {
+                    //cout << " particle " << i << ", status code: " << event[i].status() << ", pdgID: " << event[i].id() << endl;
                     TLorentzVector p4trk(event[i].px(), event[i].py(),
                                     event[i].pz(), event[i].e());
                     Int_t pdgId = event[i].id();
@@ -99,6 +98,7 @@ int main() {
 
             //cout << " n partons: " << ipar << endl;
             pevent->setPartons(partons); //copy partons into pevent's data member
+            //delete [] partons;
 
             // fastjet analysis
             fjInputs.resize(0);
@@ -162,18 +162,15 @@ int main() {
                             constituents[j].pz(), constituents[j].e());
                     Int_t pdgId = 0;
                     Float_t charge = constituents[j].user_index();
-                    // create the Ptrack object to represent particles in the jet
                     Ptrack* trk = new Ptrack(p4trk, pdgId, charge);
                     ptracks->push_back(trk);
                 }
                 
-                // save the collection of tracks to the jet object (Pjet)
                 pjet->setConstituents(*ptracks);
                 pjets->push_back(pjet);
             }// end of jet loop
             
             if (pjets->size() == 0) continue;
-            // saved the collection of jets to the event object (Pevent)
             pevent->setJets(*pjets);
             tevent->Fill();
 

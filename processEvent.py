@@ -6,7 +6,7 @@ from sklearn import preprocessing
 def readevent():
 
     ROOT.gSystem.Load("libPevent.so")
-    filename = "pevents_jetq.root"
+    filename = "pevents_jetg.root"
     infile = ROOT.TFile(filename)
     tevent = infile.Get("tevent")
     tevent.Print()
@@ -23,7 +23,7 @@ def readevent():
 def readjets():
     
     ROOT.gSystem.Load("libPevent.so")
-    filename = "pevents_jetq.root"
+    filename = "pevents_jetg.root"
     infile = ROOT.TFile(filename)
     tevent = infile.Get("tevent")
     tevent.Print()
@@ -122,7 +122,7 @@ def generateJetImages():
     print meanImagePtCharged.shape
     plt.imshow(meanImagePtCharged)
     plt.colorbar()
-    plt.savefig('ptcharged_mean_q.png')
+    plt.savefig('ptcharged_mean_g.png')
     
     # plot mean imagesPtNeutral
     plt.clf()
@@ -130,7 +130,7 @@ def generateJetImages():
     print meanImagePtNeutral.shape
     plt.imshow(meanImagePtNeutral)
     plt.colorbar()
-    plt.savefig('ptneutral_mean_q.png')
+    plt.savefig('ptneutral_mean_g.png')
     
     # plot mean imageMultCharged
     plt.clf()
@@ -138,7 +138,7 @@ def generateJetImages():
     print meanImageMultCharged.shape
     plt.imshow(meanImageMultCharged)
     plt.colorbar()
-    plt.savefig('multcharged_mean_q.png')
+    plt.savefig('multcharged_mean_g.png')
     
     # normalize & standardize each channel
     normJetImages = np.zeros_like(jetImages)
@@ -186,15 +186,23 @@ def generateJetImages():
     #print np.mean(np.std(stJetImages, axis=(2,3)))
     #return 1
 
-    with open('stjetimages_q.npy', 'wb') as outfile:
+    with open('stjetimages_g.npy', 'wb') as outfile:
         np.save(outfile, jetImages)
 
 def readJetImages():
     
     print 'reading jet images...'
-    jetImages = np.load('stjetimages_q.npy')
-    print 'jetImages.shape:'
-    print jetImages.shape
+    print '\n'
+    jetImages_g = np.load('stjetimages_g.npy')
+    print 'jetImages_g.shape:'
+    print jetImages_g.shape
+    print '\n'
+
+    jetImages_q = np.load('stjetimages_q.npy')
+    print 'jetImages_q.shape:'
+    print jetImages_q.shape
+    
+    return jetImages_g, jetImages_q
 
 if __name__ == '__main__':
     #readevent()
